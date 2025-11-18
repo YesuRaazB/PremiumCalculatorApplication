@@ -1,0 +1,76 @@
+﻿@model dynamic
+@{
+    ViewData["Title"] = "Premium Calculator";
+}
+
+<h2>Insurance Premium Calculator</h2>
+
+<form id="premiumForm">
+    <div class="form-group">
+        <label>Name <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" name="Name" required />
+    </div>
+    <div class="form-group">
+        <label>Age Next Birthday <span class="text-danger">*</span></label>
+        <input type="number" min="1" class="form-control" name="AgeNextBirthday" required />
+    </div>
+    <div class="form-group">
+        <label>Date of Birth (mm/yyyy) <span class="text-danger">*</span></label>
+        <input type="text" placeholder="e.g., 05/1990" class="form-control" name="DateOfBirth" required pattern="\d{2}/\d{4}" />
+    </div>
+    <div class="form-group">
+        <label>Occupation <span class="text-danger">*</span></label>
+        <select class="form-control" name="Occupation" required id="occupationSelect">
+            <option value="">-- Select Occupation --</option>
+            @foreach (var occ in ViewBag.Occupations ?? new List<string>())
+            {
+                <option value="@occ">@occ</option>
+            }
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Death Sum Insured <span class="text-danger">*</span></label>
+        <input type="number" step="0.01" min="0" class="form-control" name="DeathSumInsured" required />
+    </div>
+    <button type="submit" class="btn btn-primary">Calculate Premium</button>
+</form>
+
+<div id="result" class="mt-4"></div>
+
+<style>
+    .form-group { margin-bottom: 1rem; }
+    .form-control { width: 100%; padding: 0.5rem; }
+    .text-danger { color: red; }
+</style>
+
+@section Scripts {
+    <script>
+        document.getElementById('premiumForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+
+            const response = await fetch('/Home/Calculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            const resultDiv = document.getElementById('result');
+            if (result.success) {
+                resultDiv.innerHTML = `<h3 class="text-success">Monthly Premium: $${result.premium}</h3>`;
+            } else {
+                resultDiv.innerHTML = `<p class="text-danger">${result.message}</p>`;
+            }
+        });
+
+        // Auto-recalculate on occupation change
+        document.getElementById('occupationSelect').addEventListener('change', function() {
+            const form = document.getElementById('premiumForm');
+            if (form.checkValidity()) {
+                form.dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+}

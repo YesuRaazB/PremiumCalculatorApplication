@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\PremiumCalculator.Application\PremiumCalculator.Application.csproj" />
+  </ItemGroup>
+
+
+
+		<PropertyGroup>
+			<TargetFramework>net8.0</TargetFramework>
+			<Nullable>enable</Nullable>
+			<ImplicitUsings>enable</ImplicitUsings>
+		</PropertyGroup>
+		<ItemGroup>
+			<ProjectReference Include="..\PremiumCalculator.Application\PremiumCalculator.Application.csproj" />
+			<ProjectReference Include="..\PremiumCalculator.Domain\PremiumCalculator.Domain.csproj" />
+			<ProjectReference Include="..\PremiumCalculator.Infrastructure\PremiumCalculator.Infrastructure.csproj" />
+		</ItemGroup>
+		<ItemGroup>
+			<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.0" />
+		</ItemGroup>
+	</Project>
+	
+
