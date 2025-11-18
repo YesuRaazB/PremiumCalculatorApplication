@@ -138,3 +138,98 @@ dotnet add PremiumCalculator.Application/PremiumCalculator.Application.csproj re
 dotnet add PremiumCalculator.Infrastructure/PremiumCalculator.Infrastructure.csproj reference PremiumCalculator.Domain/PremiumCalculator.Domain.csproj
 dotnet add PremiumCalculator.Tests/PremiumCalculator.Tests.csproj reference PremiumCalculator.Application/PremiumCalculator.Application.csproj
 dotnet add PremiumCalculator.Tests/PremiumCalculator.Tests.csproj reference PremiumCalculator.Domain/PremiumCalculator.Domain.csproj
+
+-- =============================================
+-- Premium Calculator - Full SQL Server Database
+-- Run this entire script in SSMS → New Query
+-- =============================================
+
+USE master;
+GO
+
+-- Create Database (if not exists)
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'PremiumCalculatorDB')
+BEGIN
+    CREATE DATABASE PremiumCalculatorDB;
+    PRINT 'Database PremiumCalculatorDB created successfully!';
+END
+GO
+
+USE PremiumCalculatorDB;
+GO
+
+-- Drop tables if they already exist (safe to re-run)
+IF OBJECT_ID('dbo.CustomerPremiums', 'U') IS NOT NULL DROP TABLE dbo.CustomerPremiums;
+IF OBJECT_ID('dbo.OccupationRatings', 'U') IS NOT NULL DROP TABLE dbo.OccupationRatings;
+GO
+
+----------------------------------------------------------
+-- 1. Occupation Ratings (Master Table)
+----------------------------------------------------------
+CREATE TABLE dbo.OccupationRatings (
+    Id             INT IDENTITY(1,1) PRIMARY KEY,
+    OccupationName NVARCHAR(100) NOT NULL UNIQUE,
+    RatingName     NVARCHAR(50)  NOT NULL,
+    Factor         DECIMAL(5,3)  NOT NULL CHECK (Factor > 0)
+);
+GO
+
+----------------------------------------------------------
+-- 2. Customer Premium Calculations (Transaction Table)
+----------------------------------------------------------
+CREATE TABLE dbo.CustomerPremiums (
+    Id                 BIGINT IDENTITY(1,1) PRIMARY KEY,
+    CustomerName       NVARCHAR(200) NOT NULL,
+    AgeNextBirthday    TINYINT NOT NULL CHECK (AgeNextBirthday BETWEEN 1 AND 120),
+    DateOfBirth        VARCHAR(7) NOT NULL,       -- MM/YYYY
+    OccupationId       INT NOT NULL,
+    DeathSumInsured    DECIMAL(18,2) NOT NULL CHECK (DeathSumInsured > 0),
+
+    -- FIXED: Correct data type definition
+    MonthlyPremium     DECIMAL(12,2) NOT NULL,
+
+    CalculatedOn       DATETIME2 DEFAULT SYSDATETIME(),
+
+    CONSTRAINT FK_CustomerPremiums_Occupation 
+        FOREIGN KEY (OccupationId) REFERENCES dbo.OccupationRatings(Id)
+);
+GO
+
+----------------------------------------------------------
+-- Indexes for performance
+----------------------------------------------------------
+CREATE INDEX IX_CustomerPremiums_OccupationId 
+    ON dbo.CustomerPremiums(OccupationId);
+
+CREATE INDEX IX_CustomerPremiums_CalculatedOn 
+    ON dbo.CustomerPremiums(CalculatedOn DESC);
+GO
+
+----------------------------------------------------------
+-- Seed Occupation Ratings (as per coding test)
+----------------------------------------------------------
+INSERT INTO dbo.OccupationRatings (OccupationName, RatingName, Factor) VALUES
+('Cleaner',   'Light Manual',   1.500),
+('Doctor',    'Professional',   1.000),
+('Author',    'White Collar',   1.250),
+('Farmer',    'Heavy Manual',   1.750),
+('Mechanic',  'Heavy Manual',   1.750),
+('Florist',   'Light Manual',   1.500);
+GO
+
+PRINT 'Tables created and data seeded successfully!';
+GO
+
+----------------------------------------------------------
+-- Test Query: Validate premium formula
+-- Formula: (DeathSumInsured * Factor * AgeNextBirthday * 12) / 1000
+----------------------------------------------------------
+SELECT 
+    'Doctor' AS Occupation,
+    30 AS AgeNextBirthday,
+    1000000.00 AS DeathSumInsured,
+    (1000000.00 * Factor * 30 * 12) / 1000 AS ExpectedMonthlyPremium
+FROM dbo.OccupationRatings 
+WHERE OccupationName = 'Doctor';
+-- Expected Result: 3600.00
+
