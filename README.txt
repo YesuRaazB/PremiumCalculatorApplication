@@ -233,3 +233,9 @@ FROM dbo.OccupationRatings
 WHERE OccupationName = 'Doctor';
 -- Expected Result: 3600.00
 
+Clone: git clone https://github.com/YesuRaazB/PremiumCalculatorApplication.git
+Open PremiumCalculator.sln in VS 2022+.
+Restore NuGet: Right-click Solution → Restore NuGet Packages.
+Run: F5 → Browser opens to form.
+Test: Enter Name="Test", Age=30, DOB="04/1992", Occupation="Doctor", Sum=1000000 → Auto-shows $3600.00.
+Tests: Right-click Tests project → Run Tests (all pass)
