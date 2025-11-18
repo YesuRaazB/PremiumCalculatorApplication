@@ -20,21 +20,49 @@
 
 ## Database Design (for future SQL Server implementation)
 
-Table: **OccupationRatings**
-| Column          | Type         | Notes                    |
-|-----------------|--------------|--------------------------|
-| Id              | INT PK       | Identity                 |
-| OccupationName  | NVARCHAR(100)| e.g., Doctor, Cleaner    |
-| RatingName      | NVARCHAR(50) | Professional, Light Manual|
-| Factor          | DECIMAL(5,3) | e.g., 1.000, 1.750       |
+CREATE TABLE OccupationRatings (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    OccupationName NVARCHAR(100) NOT NULL,
+    RatingName NVARCHAR(50) NOT NULL,
+    Factor DECIMAL(5,3) NOT NULL
+);
 
-Table: **Customers** (future)
-| Column          | Type         |
-|-----------------|--------------|
-| Id              | INT PK       |
-| Name            | NVARCHAR(200)|
-| DateOfBirth     | DATE         |
-| OccupationId    | INT FK       |
+CREATE TABLE Customers (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(200) NOT NULL,
+    DateOfBirth DATE NOT NULL,
+    OccupationId INT NOT NULL,
+    CONSTRAINT FK_Customers_OccupationRatings
+        FOREIGN KEY (OccupationId) REFERENCES OccupationRatings(Id)
+);
+Get All Occupations : 
+SELECT Id, OccupationName, RatingName, Factor
+FROM OccupationRatings
+ORDER BY OccupationName;
+Join Customers With Occupations:
+SELECT 
+    c.Id,
+    c.Name,
+    c.DateOfBirth,
+    o.OccupationName,
+    o.RatingName,
+    o.Factor
+FROM Customers c
+JOIN OccupationRatings o
+    ON c.OccupationId = o.Id;
+
+Find Age Next Birthday (SQL Calculation):
+SELECT 
+    Name,
+    DateOfBirth,
+    DATEDIFF(YEAR, DateOfBirth, GETDATE())
+    + CASE 
+          WHEN DATEFROMPARTS(YEAR(GETDATE()), MONTH(DateOfBirth), DAY(DateOfBirth)) 
+               > GETDATE() 
+          THEN 0 ELSE 1 
+      END AS AgeNextBirthday
+FROM Customers;
+
 
 ## Assumptions & Clarifications
 - Age Next Birthday is entered directly by user (as per spec)
